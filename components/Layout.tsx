@@ -17,7 +17,7 @@ export default function Layout({ children }: LayoutProps) {
   const navigation = [
     { name: 'Today', href: '/', icon: '📅', mobileIcon: '🏠' },
     { name: 'Weekly', href: '/weekly', icon: '🗓️', mobileIcon: '📅' },
-    { name: 'History', href: '/history', icon: '📊', mobileIcon: '📈' },
+    { name: 'Manage Library', href: '/library', icon: '📚', mobileIcon: '📚' },
     { name: 'Settings', href: '/settings', icon: '⚙️', mobileIcon: '⚙️' },
   ]
 
