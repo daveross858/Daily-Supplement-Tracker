@@ -164,22 +164,8 @@ export default function Home() {
       <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
         {/* Mobile-First Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-4 md:p-6 rounded-b-3xl shadow-lg">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold mb-2">Daily Supplements</h1>
-              <p className="text-blue-100 text-sm md:text-base">Track your wellness journey</p>
-            </div>
-            <div className="text-right">
-              <div className="text-sm md:text-base text-blue-100 mb-1">Today</div>
-              <div className="text-lg md:text-xl font-semibold">
-                {new Date().toLocaleDateString('en-US', { 
-                  weekday: 'short', 
-                  month: 'short', 
-                  day: 'numeric' 
-                })}
-              </div>
-            </div>
-          </div>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">Daily Supplements</h1>
+          <p className="text-blue-100 text-sm md:text-base">Track your wellness journey</p>
         </div>
 
         <div className="p-4 md:p-6 space-y-4 md:space-y-6">

@@ -125,7 +125,17 @@ export default function Layout({ children }: LayoutProps) {
         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
             <h1 className="text-lg font-bold text-gray-900">
-              {navigation.find(item => item.href === router.pathname)?.name || 'Supplement Tracker'}
+              {router.pathname === '/' ? (
+                <>
+                  Today{' - '}
+                  {new Date().toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
+                </>
+              ) : (
+                navigation.find(item => item.href === router.pathname)?.name || 'Supplement Tracker'
+              )}
             </h1>
             
             {/* Mobile User Profile */}
