@@ -9,20 +9,21 @@ export default function Settings() {
 
   return (
     <Layout>
-      <div className="bg-purple-600 text-white p-6">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2">Settings</h1>
-          <p className="text-purple-100">Manage your app preferences and data</p>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto p-6 space-y-8">
-        {/* General Settings */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold">General Settings</h2>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="p-4 md:p-6 shadow-lg">
+          <div className="max-w-4xl mx-auto">
+            <p className="text-xs">Manage your app preferences and data</p>
           </div>
-          <div className="p-6 space-y-6">
+        </div>
+
+        <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
+          {/* General Settings */}
+          <div className="bg-white rounded-xl shadow-md border border-gray-100">
+            <div className="p-4 md:p-6 border-b border-gray-200">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900">General Settings</h2>
+            </div>
+            <div className="p-4 md:p-6 space-y-6">
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -52,29 +53,30 @@ export default function Settings() {
           </div>
         </div>
 
-        {/* Data Management */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold">Data Management</h2>
-          </div>
-          <div className="p-6 space-y-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="font-medium text-gray-900">Export Data</h3>
-                <p className="text-sm text-gray-500">Download your supplement data as JSON</p>
-              </div>
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                Export
-              </button>
+          {/* Data Management */}
+          <div className="bg-white rounded-xl shadow-md border border-gray-100">
+            <div className="p-4 md:p-6 border-b border-gray-200">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900">Data Management</h2>
             </div>
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="font-medium text-gray-900">Clear All Data</h3>
-                <p className="text-sm text-gray-500">Remove all supplement data and settings</p>
+            <div className="p-4 md:p-6 space-y-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-medium text-gray-900">Export Data</h3>
+                  <p className="text-sm text-gray-500">Download your supplement data as JSON</p>
+                </div>
+                <button className="bg-blue-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl hover:bg-blue-700 active:bg-blue-800 transition-all duration-200 font-medium transform active:scale-95">
+                  Export
+                </button>
               </div>
-              <button className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
-                Clear Data
-              </button>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-medium text-gray-900">Clear All Data</h3>
+                  <p className="text-sm text-gray-500">Remove all supplement data and settings</p>
+                </div>
+                <button className="bg-red-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl hover:bg-red-700 active:bg-red-800 transition-all duration-200 font-medium transform active:scale-95">
+                  Clear Data
+                </button>
+              </div>
             </div>
           </div>
         </div>

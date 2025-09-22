@@ -150,6 +150,26 @@ export async function updateUserTodaysDataInFirebase(userId: string, supplements
   }
 }
 
+export async function updateUserDateDataInFirebase(userId: string, dateString: string, supplements: Supplement[]) {
+  const docRef = doc(db, DAILY_DATA_COLLECTION, `${userId}_${dateString}`)
+  
+  try {
+    const data: DayData = { 
+      date: dateString, 
+      supplements: supplements.map(s => ({
+        ...s,
+        takenAt: Timestamp.fromDate(s.takenAt)
+      })) as any
+    }
+    
+    await setDoc(docRef, data)
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error updating date data:', error)
+    return { success: false, error: error.message }
+  }
+}
+
 export async function getUserDailyDataFromFirebase(userId: string): Promise<DayData[]> {
   try {
     const q = query(
