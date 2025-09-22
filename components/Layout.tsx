@@ -21,6 +21,21 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Settings', href: '/settings', icon: '⚙️', mobileIcon: '⚙️' },
   ]
 
+  // Close user menu when clicking outside - MOVED BEFORE CONDITIONAL RETURN
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const clickedOutsideDesktop = desktopMenuRef.current && !desktopMenuRef.current.contains(event.target as Node)
+      const clickedOutsideMobile = mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)
+      
+      if (clickedOutsideDesktop || clickedOutsideMobile) {
+        setShowUserMenu(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   // Show loading state during auth check
   if (isLoading) {
     return (
@@ -34,21 +49,6 @@ export default function Layout({ children }: LayoutProps) {
       </div>
     )
   }
-
-  // Close user menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        (desktopMenuRef.current && !desktopMenuRef.current.contains(event.target as Node)) &&
-        (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node))
-      ) {
-        setShowUserMenu(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   const handleLogout = () => {
     logout()
