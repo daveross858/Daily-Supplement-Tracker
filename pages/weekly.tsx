@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import AuthForm from '../components/AuthForm'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/AuthContextFirebase'
 import { DayData, TimeCategory, getUserDailyData } from '../utils/storage-enhanced'
 
 export default function Weekly() {

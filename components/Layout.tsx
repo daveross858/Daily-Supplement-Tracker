@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/AuthContextFirebase'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -9,7 +9,7 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const router = useRouter()
-  const { user, logout } = useAuth()
+  const { user, logout, isLoading } = useAuth()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const desktopMenuRef = useRef<HTMLDivElement>(null)
   const mobileMenuRef = useRef<HTMLDivElement>(null)
@@ -20,6 +20,20 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'History', href: '/history', icon: '📊', mobileIcon: '📈' },
     { name: 'Settings', href: '/settings', icon: '⚙️', mobileIcon: '⚙️' },
   ]
+
+  // Show loading state during auth check
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-blue-600 rounded-full flex items-center justify-center animate-pulse">
+            <span className="text-2xl text-white">💊</span>
+          </div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
 
   // Close user menu when clicking outside
   useEffect(() => {
