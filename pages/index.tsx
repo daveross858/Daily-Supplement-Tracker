@@ -9,8 +9,9 @@ import {
   getUserTodaysData, 
   updateUserTodaysData,
   getUserSupplementLibrary,
-  addSupplementFromLibrary
-} from '../utils/storage'
+  addSupplementFromLibrary,
+  migrateDataToFirebase
+} from '../utils/storage-enhanced'
 
 export default function Home() {
   const { isAuthenticated, isLoading, user } = useAuth()
@@ -34,16 +35,34 @@ export default function Home() {
 
   // Load today's data on component mount
   useEffect(() => {
-    if (user) {
-      const data = getUserTodaysData(user.id)
-      setSupplements(data.supplements)
-      
-      const library = getUserSupplementLibrary(user.id)
-      setSupplementLibrary(library)
+    async function loadData() {
+      if (user) {
+        try {
+          // Attempt data migration from localStorage to Firebase if needed
+          if (process.env.NEXT_PUBLIC_USE_FIREBASE === 'true') {
+            const migrationResult = await migrateDataToFirebase(user.id)
+            if (migrationResult.success) {
+              console.log('Migration:', migrationResult.message)
+            }
+          }
+
+          const [todaysData, library] = await Promise.all([
+            getUserTodaysData(user.id),
+            getUserSupplementLibrary(user.id)
+          ])
+          
+          setSupplements(todaysData.supplements)
+          setSupplementLibrary(library)
+        } catch (error) {
+          console.error('Error loading data:', error)
+        }
+      }
     }
+    
+    loadData()
   }, [user])
 
-  const addSupplement = () => {
+  const addSupplement = async () => {
     if (newSupplement.name.trim() && user) {
       const supplement: Supplement = {
         id: Date.now().toString(),
@@ -55,36 +74,58 @@ export default function Home() {
       }
       const updatedSupplements = [...supplements, supplement]
       setSupplements(updatedSupplements)
-      updateUserTodaysData(user.id, updatedSupplements)
+      
+      try {
+        await updateUserTodaysData(user.id, updatedSupplements)
+      } catch (error) {
+        console.error('Error saving supplement:', error)
+      }
+      
       setNewSupplement({ name: '', dosage: '', timeCategory: 'Morning (Wake + Breakfast)' })
       setShowAddForm(false)
     }
   }
 
-  const toggleSupplement = (id: string) => {
+  const toggleSupplement = async (id: string) => {
     if (user) {
       const updatedSupplements = supplements.map(s => 
         s.id === id ? { ...s, completed: !s.completed } : s
       )
       setSupplements(updatedSupplements)
-      updateUserTodaysData(user.id, updatedSupplements)
+      
+      try {
+        await updateUserTodaysData(user.id, updatedSupplements)
+      } catch (error) {
+        console.error('Error updating supplement:', error)
+      }
     }
   }
 
-  const removeSupplement = (id: string) => {
+  const removeSupplement = async (id: string) => {
     if (user) {
       const updatedSupplements = supplements.filter(s => s.id !== id)
       setSupplements(updatedSupplements)
-      updateUserTodaysData(user.id, updatedSupplements)
+      
+      try {
+        await updateUserTodaysData(user.id, updatedSupplements)
+      } catch (error) {
+        console.error('Error removing supplement:', error)
+      }
     }
   }
 
-  const addFromLibrary = (libraryItem: SupplementLibraryItem, timeCategory: TimeCategory) => {
+  const addFromLibrary = async (libraryItem: SupplementLibraryItem, timeCategory: TimeCategory) => {
     if (user) {
       const supplement = addSupplementFromLibrary(libraryItem, timeCategory)
       const updatedSupplements = [...supplements, supplement]
       setSupplements(updatedSupplements)
-      updateUserTodaysData(user.id, updatedSupplements)
+      
+      try {
+        await updateUserTodaysData(user.id, updatedSupplements)
+      } catch (error) {
+        console.error('Error adding from library:', error)
+      }
+      
       setShowLibrarySection(false)
     }
   }

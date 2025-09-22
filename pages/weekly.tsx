@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import AuthForm from '../components/AuthForm'
 import { useAuth } from '../contexts/AuthContext'
-import { DayData, TimeCategory, getUserDailyData } from '../utils/storage'
+import { DayData, TimeCategory, getUserDailyData } from '../utils/storage-enhanced'
 
 export default function Weekly() {
   const { isAuthenticated, isLoading, user } = useAuth()
@@ -69,22 +69,31 @@ export default function Weekly() {
 
   // Load weekly data
   useEffect(() => {
-    if (!user) return
-    
-    const weekStart = getWeekStart(currentWeekStart)
-    const weekDates = getWeekDates(weekStart)
-    const userData = getUserDailyData(user.id)
-    
-    const weekData = weekDates.map(date => {
-      const dateString = date.toISOString().split('T')[0]
-      const dayData = userData.find(d => d.date === dateString)
-      return dayData || {
-        date: dateString,
-        supplements: []
+    async function loadWeeklyData() {
+      if (!user) return
+      
+      const weekStart = getWeekStart(currentWeekStart)
+      const weekDates = getWeekDates(weekStart)
+      
+      try {
+        const userData = await getUserDailyData(user.id)
+        
+        const weekData = weekDates.map(date => {
+          const dateString = date.toISOString().split('T')[0]
+          const dayData = userData.find(d => d.date === dateString)
+          return dayData || {
+            date: dateString,
+            supplements: []
+          }
+        })
+        
+        setWeeklyData(weekData)
+      } catch (error) {
+        console.error('Error loading weekly data:', error)
       }
-    })
+    }
     
-    setWeeklyData(weekData)
+    loadWeeklyData()
   }, [currentWeekStart, user])
 
   // Navigate weeks
