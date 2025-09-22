@@ -23,6 +23,8 @@ export default function Home() {
   const [selectedTimeCategory, setSelectedTimeCategory] = useState<TimeCategory>('Morning (Wake + Breakfast)')
   const [migrationStatus, setMigrationStatus] = useState<string>('')
   const [activeSection, setActiveSection] = useState<'today' | 'library'>('today')
+  const [currentDate, setCurrentDate] = useState<string>(new Date().toDateString())
+  const [lastCompletedDate, setLastCompletedDate] = useState<string | null>(null)
 
   const timeCategories: TimeCategory[] = [
     'Morning (Wake + Breakfast)',
@@ -36,6 +38,32 @@ export default function Home() {
   const filteredSupplements = supplementLibrary.filter(supplement =>
     supplement.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  // Check if all supplements are completed
+  const allSupplementsCompleted = supplements.length > 0 && supplements.every(s => s.completed)
+
+  // Check if a new day has started
+  const checkForNewDay = () => {
+    const today = new Date().toDateString()
+    if (currentDate !== today) {
+      setCurrentDate(today)
+      // Reset all supplements for the new day
+      const resetSupplements = supplements.map(s => ({ ...s, completed: false }))
+      setSupplements(resetSupplements)
+      if (user) {
+        updateUserTodaysData(user.id, resetSupplements)
+      }
+    }
+  }
+
+  // Complete day function
+  const completeDay = async () => {
+    if (user) {
+      setLastCompletedDate(currentDate)
+      // You could add additional logic here like saving completion to history
+      console.log(`Day completed on ${currentDate}`)
+    }
+  }
 
   // Load today's data on component mount
   useEffect(() => {
@@ -65,6 +93,12 @@ export default function Home() {
     
     loadData()
   }, [user])
+
+  // Check for new day every minute
+  useEffect(() => {
+    const interval = setInterval(checkForNewDay, 60000) // Check every minute
+    return () => clearInterval(interval)
+  }, [currentDate, supplements, user])
 
   const toggleSupplement = async (id: string) => {
     if (user) {
@@ -130,8 +164,22 @@ export default function Home() {
       <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
         {/* Mobile-First Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-4 md:p-6 rounded-b-3xl shadow-lg">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">Daily Supplements</h1>
-          <p className="text-blue-100 text-sm md:text-base">Track your wellness journey</p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold mb-2">Daily Supplements</h1>
+              <p className="text-blue-100 text-sm md:text-base">Track your wellness journey</p>
+            </div>
+            <div className="text-right">
+              <div className="text-sm md:text-base text-blue-100 mb-1">Today</div>
+              <div className="text-lg md:text-xl font-semibold">
+                {new Date().toLocaleDateString('en-US', { 
+                  weekday: 'short', 
+                  month: 'short', 
+                  day: 'numeric' 
+                })}
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="p-4 md:p-6 space-y-4 md:space-y-6">
@@ -400,6 +448,19 @@ export default function Home() {
                   )}
                 </div>
               </div>
+
+              {/* Complete Day Button */}
+              {allSupplementsCompleted && lastCompletedDate !== currentDate && (
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={completeDay}
+                    className="bg-green-600 text-white px-8 py-4 rounded-xl hover:bg-green-700 active:bg-green-800 transition-all duration-200 font-semibold text-lg shadow-lg transform active:scale-95"
+                  >
+                    🎉 Complete Day! 🎉
+                  </button>
+                  <p className="text-sm text-gray-600 mt-2">All supplements taken for today!</p>
+                </div>
+              )}
             </>
           )}
 
