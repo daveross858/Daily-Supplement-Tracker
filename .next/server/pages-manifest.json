@@ -2,8 +2,6 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/weekly": "pages/weekly.js",
-  "/": "pages/index.js",
-  "/settings": "pages/settings.js",
-  "/library": "pages/library.js"
+  "/library": "pages/library.js",
+  "/": "pages/index.js"
 }

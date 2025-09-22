@@ -38,10 +38,10 @@ export default function Layout({ children }: LayoutProps) {
   // Close user menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        (desktopMenuRef.current && !desktopMenuRef.current.contains(event.target as Node)) &&
-        (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node))
-      ) {
+      const clickedOutsideDesktop = desktopMenuRef.current && !desktopMenuRef.current.contains(event.target as Node)
+      const clickedOutsideMobile = mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)
+      
+      if (clickedOutsideDesktop || clickedOutsideMobile) {
         setShowUserMenu(false)
       }
     }
