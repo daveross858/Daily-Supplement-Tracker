@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Layout from '../components/Layout'
 import AuthForm from '../components/AuthForm'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/AuthContextFirebase'
 import { 
   Supplement, 
   TimeCategory,
