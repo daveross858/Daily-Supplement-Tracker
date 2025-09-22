@@ -4,6 +4,7 @@
 import { 
   getUserTodaysDataFromFirebase, 
   updateUserTodaysDataInFirebase,
+  updateUserDateDataInFirebase,
   getUserDailyDataFromFirebase,
   getUserSupplementLibraryFromFirebase,
   saveUserSupplementLibraryToFirebase,
@@ -112,6 +113,20 @@ export async function updateUserTodaysData(userId: string, supplements: Suppleme
   updateUserTodaysDataLocal(userId, supplements)
 }
 
+export async function updateUserDateData(userId: string, dateString: string, supplements: Supplement[]): Promise<void> {
+  if (USE_FIREBASE && typeof window !== 'undefined') {
+    try {
+      await updateUserDateDataInFirebase(userId, dateString, supplements)
+      return
+    } catch (error) {
+      console.warn('Firebase error, falling back to localStorage:', error)
+    }
+  }
+  
+  // Fallback to localStorage
+  updateUserDateDataLocal(userId, dateString, supplements)
+}
+
 export async function getUserDailyData(userId: string): Promise<DayData[]> {
   if (USE_FIREBASE && typeof window !== 'undefined') {
     try {
@@ -194,6 +209,15 @@ function updateUserTodaysDataLocal(userId: string, supplements: Supplement[]) {
   const today = new Date().toISOString().split('T')[0]
   const userKey = getUserKey(userId, today)
   const data: DayData = { date: today, supplements }
+  
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(userKey, JSON.stringify(data))
+  }
+}
+
+function updateUserDateDataLocal(userId: string, dateString: string, supplements: Supplement[]) {
+  const userKey = getUserKey(userId, dateString)
+  const data: DayData = { date: dateString, supplements }
   
   if (typeof window !== 'undefined') {
     localStorage.setItem(userKey, JSON.stringify(data))
@@ -459,5 +483,112 @@ export function getCurrentSession(): AuthSession | null {
 export function logout() {
   if (typeof window !== 'undefined') {
     localStorage.removeItem(SESSION_KEY)
+  }
+}
+
+// Daily Template Functions
+export interface DailyTemplate {
+  id: string
+  userId: string
+  name: string
+  supplements: Omit<Supplement, 'id' | 'completed' | 'takenAt'>[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+const DAILY_TEMPLATE_KEY = 'supplement_daily_template'
+
+export async function saveDailyTemplate(userId: string, supplements: Supplement[]): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Convert supplements to template format (remove id, completed, takenAt)
+    const templateSupplements = supplements.map(supplement => ({
+      name: supplement.name,
+      dosage: supplement.dosage,
+      timeCategory: supplement.timeCategory
+    }))
+
+    const template: DailyTemplate = {
+      id: 'daily-template',
+      userId,
+      name: 'Daily Supplement Template',
+      supplements: templateSupplements,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+
+    if (process.env.NEXT_PUBLIC_USE_FIREBASE === 'true') {
+      // Save to Firebase (we'll implement this in firebase-service.ts)
+      // For now, fall back to localStorage
+      console.log('Firebase template saving not yet implemented, using localStorage')
+    }
+
+    // Save to localStorage as fallback
+    if (typeof window !== 'undefined') {
+      const key = `${DAILY_TEMPLATE_KEY}_${userId}`
+      localStorage.setItem(key, JSON.stringify(template))
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error saving daily template:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+  }
+}
+
+export async function getDailyTemplate(userId: string): Promise<DailyTemplate | null> {
+  try {
+    if (process.env.NEXT_PUBLIC_USE_FIREBASE === 'true') {
+      // Get from Firebase (we'll implement this in firebase-service.ts)
+      // For now, fall back to localStorage
+      console.log('Firebase template loading not yet implemented, using localStorage')
+    }
+
+    // Get from localStorage as fallback
+    if (typeof window !== 'undefined') {
+      const key = `${DAILY_TEMPLATE_KEY}_${userId}`
+      const templateData = localStorage.getItem(key)
+      if (templateData) {
+        return JSON.parse(templateData)
+      }
+    }
+
+    return null
+  } catch (error) {
+    console.error('Error getting daily template:', error)
+    return null
+  }
+}
+
+export async function applyDailyTemplate(userId: string, targetDate?: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const template = await getDailyTemplate(userId)
+    if (!template) {
+      return { success: false, error: 'No daily template found' }
+    }
+
+    // Convert template supplements to actual supplements
+    const supplements: Supplement[] = template.supplements.map((templateSup, index) => ({
+      id: `template-${index}-${Date.now()}`,
+      name: templateSup.name,
+      dosage: templateSup.dosage,
+      timeCategory: templateSup.timeCategory,
+      completed: false,
+      takenAt: new Date()
+    }))
+
+    // Apply to today or target date
+    const dateToApply = targetDate || new Date().toISOString().split('T')[0]
+    
+    // Update the day's data with the correct function
+    if (targetDate) {
+      await updateUserDateData(userId, dateToApply, supplements)
+    } else {
+      await updateUserTodaysData(userId, supplements)
+    }
+    
+    return { success: true }
+  } catch (error) {
+    console.error('Error applying daily template:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }

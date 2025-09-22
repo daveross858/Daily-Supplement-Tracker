@@ -10,7 +10,10 @@ import {
   updateUserTodaysData,
   getUserSupplementLibrary,
   addSupplementFromLibrary,
-  migrateDataToFirebase
+  migrateDataToFirebase,
+  saveDailyTemplate,
+  getDailyTemplate,
+  applyDailyTemplate
 } from '../utils/storage-enhanced'
 
 export default function Home() {
@@ -27,6 +30,8 @@ export default function Home() {
   const [currentDate, setCurrentDate] = useState<string>(new Date().toDateString())
   const [lastCompletedDate, setLastCompletedDate] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [hasTemplate, setHasTemplate] = useState(false)
+  const [savingTemplate, setSavingTemplate] = useState(false)
 
   // Mount effect - runs once
   useEffect(() => {
@@ -56,9 +61,13 @@ export default function Home() {
           getUserSupplementLibrary(user.id)
         ])
         
+        // Check if user has a daily template
+        const template = await getDailyTemplate(user.id)
+        
         if (!cancelled) {
           setSupplements(todaysData.supplements)
           setSupplementLibrary(library)
+          setHasTemplate(!!template)
         }
       } catch (error) {
         if (!cancelled) {
@@ -78,13 +87,40 @@ export default function Home() {
   useEffect(() => {
     if (!mounted || !isAuthenticated || !user) return
 
-    const checkDate = () => {
+    const checkDate = async () => {
       const today = new Date().toDateString()
       // Use a callback to get current state value to avoid stale closures
       setCurrentDate(prevDate => {
         if (prevDate !== today) {
           console.log('New day detected, changing from', prevDate, 'to', today)
-          setSupplements(prev => prev.map(s => ({ ...s, completed: false })))
+          
+          // Auto-apply daily template for new day if it exists
+          const applyTemplate = async () => {
+            try {
+              const template = await getDailyTemplate(user.id)
+              if (template && template.supplements.length > 0) {
+                console.log('Applying daily template for new day')
+                const result = await applyDailyTemplate(user.id)
+                if (result.success) {
+                  // Reload today's data to get the applied template
+                  const todaysData = await getUserTodaysData(user.id)
+                  setSupplements(todaysData.supplements)
+                } else {
+                  console.error('Failed to apply daily template:', result.error)
+                  // Reset supplements if template application failed
+                  setSupplements(prev => prev.map(s => ({ ...s, completed: false })))
+                }
+              } else {
+                // No template, just reset existing supplements
+                setSupplements(prev => prev.map(s => ({ ...s, completed: false })))
+              }
+            } catch (error) {
+              console.error('Error applying daily template:', error)
+              setSupplements(prev => prev.map(s => ({ ...s, completed: false })))
+            }
+          }
+          
+          applyTemplate()
           return today
         }
         return prevDate
@@ -169,6 +205,27 @@ export default function Home() {
     }
   }
 
+  const handleSaveDailyTemplate = async () => {
+    if (!user || supplements.length === 0) return
+    
+    setSavingTemplate(true)
+    try {
+      const result = await saveDailyTemplate(user.id, supplements)
+      if (result.success) {
+        setHasTemplate(true)
+        console.log('Daily template saved successfully!')
+        // You could add a toast notification here
+      } else {
+        console.error('Failed to save daily template:', result.error)
+        // You could add an error toast here
+      }
+    } catch (error) {
+      console.error('Error saving daily template:', error)
+    } finally {
+      setSavingTemplate(false)
+    }
+  }
+
   // Early returns AFTER all hooks
   if (isLoading) {
     return (
@@ -192,12 +249,13 @@ export default function Home() {
     <Layout>
       <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-4 md:p-6 rounded-b-3xl shadow-lg">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">Daily Supplements</h1>
-          <p className="text-blue-100 text-sm md:text-base">Track your wellness journey</p>
+        <div className="p-4 md:p-6 shadow-lg">
+          <div className="max-w-4xl mx-auto"> 
+            <p className="text-xs">Track your wellness journey</p>
+          </div>
         </div>
 
-        <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
           {/* Add Modal */}
           {showAddModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -438,6 +496,38 @@ export default function Home() {
                       + Add more supplements
                     </button>
                   </div>
+                </div>
+              )}
+
+              {/* Save for Everyday Button */}
+              {supplements.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-gray-200 text-center">
+                  <button
+                    onClick={handleSaveDailyTemplate}
+                    disabled={savingTemplate}
+                    className="bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 active:bg-purple-800 transition-all duration-200 font-medium shadow-md transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {savingTemplate ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                      </span>
+                    ) : (
+                      <>
+                        📅 Save for everyday
+                        {hasTemplate && <span className="ml-2 text-purple-200">(Update)</span>}
+                      </>
+                    )}
+                  </button>
+                  <p className="text-sm text-gray-600 mt-2">
+                    {hasTemplate 
+                      ? 'Update your daily supplement template' 
+                      : 'Save this list as your daily template for future days'
+                    }
+                  </p>
                 </div>
               )}
 

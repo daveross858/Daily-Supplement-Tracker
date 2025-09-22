@@ -126,12 +126,13 @@ export default function ManageLibrary() {
     <Layout>
       <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-700 text-white p-4 md:p-6 rounded-b-3xl shadow-lg">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">Manage Library</h1>
-          <p className="text-purple-100 text-sm md:text-base">Add, edit, and organize your supplements</p>
+        <div className="p-4 md:p-6 shadow-lg">
+          <div className="max-w-4xl mx-auto">
+            <p className="text-xs">Add, edit, and organize your supplements</p>
+          </div>
         </div>
 
-        <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
           {/* Stats Overview */}
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
             <div className="bg-white p-4 md:p-6 rounded-xl shadow-md border border-gray-100">
@@ -157,13 +158,13 @@ export default function ManageLibrary() {
           </div>
 
           {/* Search and Add Section */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
             <div className="bg-gray-50 px-4 md:px-6 py-4 border-b border-gray-200">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <h2 className="text-lg md:text-xl font-semibold text-gray-900">Supplement Library</h2>
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium"
+                  className="bg-purple-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-xl hover:bg-purple-700 active:bg-purple-800 transition-all duration-200 font-medium transform active:scale-95"
                 >
                   Add New Supplement
                 </button>
@@ -250,13 +251,13 @@ export default function ManageLibrary() {
                                   <>
                                     <button
                                       onClick={() => updateLibraryItem(editingItem)}
-                                      className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors"
+                                      className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-700 active:bg-green-800 transition-all duration-200 font-medium"
                                     >
                                       Save
                                     </button>
                                     <button
                                       onClick={() => setEditingItem(null)}
-                                      className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 transition-colors"
+                                      className="bg-gray-600 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-gray-700 active:bg-gray-800 transition-all duration-200 font-medium"
                                     >
                                       Cancel
                                     </button>
@@ -265,14 +266,14 @@ export default function ManageLibrary() {
                                   <>
                                     <button
                                       onClick={() => setEditingItem(supplement)}
-                                      className="text-blue-600 hover:text-blue-700 p-2 transition-colors"
+                                      className="text-blue-600 hover:text-blue-700 p-2 rounded-lg transition-all duration-200"
                                       title="Edit"
                                     >
                                       ✏️
                                     </button>
                                     <button
                                       onClick={() => removeFromLibrary(supplement.id)}
-                                      className="text-red-600 hover:text-red-700 p-2 transition-colors"
+                                      className="text-red-600 hover:text-red-700 p-2 rounded-lg transition-all duration-200"
                                       title="Delete"
                                     >
                                       🗑️

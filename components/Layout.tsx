@@ -17,7 +17,7 @@ export default function Layout({ children }: LayoutProps) {
   const navigation = [
     { name: 'Today', href: '/', icon: '📅', mobileIcon: '🏠' },
     { name: 'Weekly', href: '/weekly', icon: '🗓️', mobileIcon: '📅' },
-    { name: 'Manage Library', href: '/library', icon: '📚', mobileIcon: '📚' },
+    { name: 'Library', href: '/library', icon: '📚', mobileIcon: '📚' },
     { name: 'Settings', href: '/settings', icon: '⚙️', mobileIcon: '⚙️' },
   ]
 
@@ -121,10 +121,10 @@ export default function Layout({ children }: LayoutProps) {
       </nav>
 
       {/* Mobile Header */}
-      <header className="md:hidden bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+      <header className="md:hidden bg-gradient-to-r from-purple-700 to-blue-600 text-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-lg font-bold text-gray-900">
+            <h1 className="text-lg font-bold text-white">
               {router.pathname === '/' ? (
                 <>
                   Today{' - '}
@@ -144,8 +144,8 @@ export default function Layout({ children }: LayoutProps) {
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center space-x-2 p-1"
               >
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">
+                <div className="w-8 h-8 bg-white border border-gray-400 rounded-full flex items-center justify-center">
+                  <span className="text-black text-sm font-medium">
                     {user?.name?.charAt(0).toUpperCase()}
                   </span>
                 </div>
