@@ -2,8 +2,5 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js",
-  "/history": "pages/history.js",
-  "/settings": "pages/settings.js",
-  "/weekly": "pages/weekly.js"
+  "/": "pages/index.js"
 }
