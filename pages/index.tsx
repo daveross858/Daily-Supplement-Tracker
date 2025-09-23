@@ -32,6 +32,8 @@ export default function Home() {
   const [mounted, setMounted] = useState(false)
   const [hasTemplate, setHasTemplate] = useState(false)
   const [savingTemplate, setSavingTemplate] = useState(false)
+  const [showRemoveModal, setShowRemoveModal] = useState(false)
+  const [supplementToRemove, setSupplementToRemove] = useState<Supplement | null>(null)
 
   // Mount effect - runs once
   useEffect(() => {
@@ -151,12 +153,30 @@ export default function Home() {
   const handleRemoveSupplement = useCallback(async (id: string) => {
     if (!user) return
     
+    const supplement = supplements.find(s => s.id === id)
+    if (supplement) {
+      setSupplementToRemove(supplement)
+      setShowRemoveModal(true)
+    }
+  }, [user?.id, supplements])
+
+  const confirmRemoveSupplement = useCallback(async () => {
+    if (!user || !supplementToRemove) return
+    
     setSupplements(prev => {
-      const updated = prev.filter(s => s.id !== id)
+      const updated = prev.filter(s => s.id !== supplementToRemove.id)
       updateUserTodaysData(user.id, updated).catch(console.error)
       return updated
     })
-  }, [user?.id])
+    
+    setShowRemoveModal(false)
+    setSupplementToRemove(null)
+  }, [user?.id, supplementToRemove])
+
+  const cancelRemoveSupplement = () => {
+    setShowRemoveModal(false)
+    setSupplementToRemove(null)
+  }
 
   const handleAddFromLibrary = useCallback(async (libraryItem: SupplementLibraryItem, timeCategory: TimeCategory) => {
     if (!user) return
@@ -263,7 +283,7 @@ export default function Home() {
                 <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-gray-900">Add Supplement</h3>
-                    <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600 transition-colors">
+                    <button onClick={handleCloseModal} className="text-gray-300 hover:text-gray-400 transition-colors">
                       <span className="text-2xl">&times;</span>
                     </button>
                   </div>
@@ -474,7 +494,7 @@ export default function Home() {
                                 </div>
                                 <button
                                   onClick={() => handleRemoveSupplement(supplement.id)}
-                                  className="ml-2 text-red-400 hover:text-red-600 transition-colors p-1"
+                                  className="ml-2 text-gray-300 hover:text-gray-400 transition-colors p-1"
                                   title="Remove supplement"
                                 >
                                   <span className="text-lg">×</span>
@@ -546,6 +566,42 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Remove Confirmation Modal */}
+        {showRemoveModal && supplementToRemove && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-sm w-full">
+              <div className="p-6">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+                  <span className="text-2xl">⚠️</span>
+                </div>
+                
+                <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+                  Remove Supplement?
+                </h3>
+                
+                <p className="text-sm text-gray-600 text-center mb-4">
+                  Are you sure you want to remove <span className="font-medium">{supplementToRemove.name}</span> from today's supplements?
+                </p>
+                
+                <div className="flex gap-3">
+                  <button
+                    onClick={cancelRemoveSupplement}
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmRemoveSupplement}
+                    className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Mobile Bottom Add Button */}
         <div className="fixed bottom-20 right-4 md:hidden">
