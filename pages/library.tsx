@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Layout from '../components/Layout'
 import { useAuth } from '../contexts/AuthContextFirebase'
 import { 
@@ -13,6 +13,11 @@ export default function ManageLibrary() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingItem, setEditingItem] = useState<SupplementLibraryItem | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [showCamera, setShowCamera] = useState(false)
+  const [isProcessingImage, setIsProcessingImage] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [stream, setStream] = useState<MediaStream | null>(null)
   const [newSupplement, setNewSupplement] = useState({
     name: '',
     defaultDosage: '',
@@ -64,6 +69,121 @@ export default function ManageLibrary() {
       } catch (error) {
         console.error('Error adding supplement to library:', error)
       }
+    }
+  }
+
+  // Camera and image processing functions
+  const startCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } // Use back camera on mobile
+      })
+      setStream(mediaStream)
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream
+      }
+      setShowCamera(true)
+    } catch (error) {
+      console.error('Error accessing camera:', error)
+      alert('Unable to access camera. Please check permissions.')
+    }
+  }
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop())
+      setStream(null)
+    }
+    setShowCamera(false)
+  }
+
+  const capturePhoto = async () => {
+    if (!videoRef.current || !canvasRef.current) return
+
+    const video = videoRef.current
+    const canvas = canvasRef.current
+    const context = canvas.getContext('2d')
+
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+
+    // Draw video frame to canvas
+    context?.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+    // Convert to blob
+    canvas.toBlob(async (blob) => {
+      if (blob) {
+        setIsProcessingImage(true)
+        await processSupplementImage(blob)
+        setIsProcessingImage(false)
+      }
+    }, 'image/jpeg', 0.8)
+
+    stopCamera()
+  }
+
+  const processSupplementImage = async (imageBlob: Blob) => {
+    try {
+      // Convert blob to base64
+      const base64Image = await blobToBase64(imageBlob)
+      
+      // Call AI service to extract text (using a simple mock for now)
+      const extractedInfo = await extractSupplementInfo(base64Image)
+      
+      // Populate form with extracted information
+      setNewSupplement({
+        name: extractedInfo.name || '',
+        defaultDosage: extractedInfo.dosage || '',
+        category: extractedInfo.category || 'Vitamins'
+      })
+      
+    } catch (error) {
+      console.error('Error processing image:', error)
+      alert('Error processing image. Please try again or enter information manually.')
+    }
+  }
+
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
+  }
+
+  const extractSupplementInfo = async (base64Image: string): Promise<{name?: string, dosage?: string, category?: string}> => {
+    // This is a simplified mock implementation
+    // In a real app, you would integrate with services like:
+    // - Google Cloud Vision API
+    // - AWS Textract
+    // - OpenAI GPT-4 Vision
+    // - Azure Computer Vision
+    
+    try {
+      // For demo purposes, we'll use a simple regex pattern matching
+      // In reality, you'd send this to an AI service
+      
+      // Simulate AI processing delay
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Mock extracted data (in real implementation, this would come from AI service)
+      const mockResults = [
+        { name: 'Vitamin D3', dosage: '2000 IU', category: 'Vitamins' },
+        { name: 'Omega-3 Fish Oil', dosage: '1000mg', category: 'Essential Fatty Acids' },
+        { name: 'Magnesium Glycinate', dosage: '400mg', category: 'Minerals' },
+        { name: 'Probiotics', dosage: '50 Billion CFU', category: 'Digestive Health' },
+        { name: 'Turmeric Curcumin', dosage: '500mg', category: 'Herbal' }
+      ]
+      
+      // Return a random result for demo
+      const randomResult = mockResults[Math.floor(Math.random() * mockResults.length)]
+      return randomResult
+      
+    } catch (error) {
+      console.error('Error extracting supplement info:', error)
+      return {}
     }
   }
 
@@ -293,6 +413,85 @@ export default function ManageLibrary() {
           </div>
         </div>
 
+      {/* Camera Modal */}
+      {showCamera && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+          <div className="max-w-md w-full mx-4">
+            <div className="bg-white rounded-t-xl p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Scan Supplement Label</h3>
+                <button
+                  onClick={stopCamera}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <span className="text-2xl">&times;</span>
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                Position the supplement label within the frame and tap capture
+              </p>
+            </div>
+            
+            <div className="relative bg-black">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                className="w-full h-64 object-cover"
+              />
+              
+              {/* Overlay guide */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="border-2 border-white border-dashed w-4/5 h-3/5 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-sm bg-black bg-opacity-50 px-2 py-1 rounded">
+                    Position label here
+                  </span>
+                </div>
+              </div>
+              
+              {/* Capture button */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                <button
+                  onClick={capturePhoto}
+                  disabled={isProcessingImage}
+                  className="w-16 h-16 bg-white rounded-full border-4 border-gray-300 flex items-center justify-center shadow-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  {isProcessingImage ? (
+                    <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <div className="w-8 h-8 bg-blue-600 rounded-full"></div>
+                  )}
+                </button>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-b-xl p-4">
+              <p className="text-xs text-gray-500 text-center">
+                {isProcessingImage ? 'Processing image...' : 'Tap the button to capture'}
+              </p>
+            </div>
+          </div>
+          
+          {/* Hidden canvas for image processing */}
+          <canvas ref={canvasRef} className="hidden" />
+        </div>
+      )}
+
+      {/* Processing Overlay */}
+      {isProcessingImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-60">
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full mx-4 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Analyzing Image</h3>
+            <p className="text-sm text-gray-600">
+              Extracting supplement information from the label...
+            </p>
+          </div>
+        </div>
+      )}
+
         {/* Add Supplement Modal */}
         {showAddModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -311,6 +510,17 @@ export default function ManageLibrary() {
                   </button>
                 </div>
                 <p className="text-sm text-purple-600 mt-1">Add a new supplement to your library</p>
+                
+                {/* Camera Button */}
+                <div className="mt-3 flex justify-center">
+                  <button
+                    onClick={startCamera}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <span className="text-lg">📷</span>
+                    Scan Label with Camera
+                  </button>
+                </div>
               </div>
               
               <div className="p-6">
