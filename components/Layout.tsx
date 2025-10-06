@@ -18,7 +18,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Today', href: '/', icon: '📅', mobileIcon: '🏠' },
     { name: 'Weekly', href: '/weekly', icon: '🗓️', mobileIcon: '📅' },
     { name: 'Library', href: '/library', icon: '📚', mobileIcon: '📚' },
-    { name: 'Settings', href: '/settings', icon: '⚙️', mobileIcon: '⚙️' },
+    { name: 'Health Survey', href: '/health-survey', icon: '🧠', mobileIcon: '🧠' },
   ]
 
   // Close user menu when clicking outside - MOVED BEFORE CONDITIONAL RETURN
@@ -106,6 +106,13 @@ export default function Layout({ children }: LayoutProps) {
                       <p className="text-sm font-medium text-gray-900">{user?.name}</p>
                       <p className="text-xs text-gray-500">{user?.email}</p>
                     </div>
+                    <Link
+                      href="/settings"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      ⚙️ Settings
+                    </Link>
                     <button
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -157,6 +164,13 @@ export default function Layout({ children }: LayoutProps) {
                     <p className="text-sm font-medium text-gray-900">{user?.name}</p>
                     <p className="text-xs text-gray-500">{user?.email}</p>
                   </div>
+                  <Link
+                    href="/settings"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => setShowUserMenu(false)}
+                  >
+                    ⚙️ Settings
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"

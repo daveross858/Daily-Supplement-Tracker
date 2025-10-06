@@ -24,7 +24,10 @@ export default function ManageLibrary() {
     category: 'Vitamins'
   })
 
-  const categories = ['Vitamins', 'Minerals', 'Essential Fatty Acids', 'Digestive Health', 'Herbal', 'Other']
+  // Get all categories that actually exist in the library, plus the standard ones
+  const standardCategories = ['Vitamins', 'Minerals', 'Essential Fatty Acids', 'Digestive Health', 'Herbal', 'Other']
+  const actualCategories = Array.from(new Set(supplementLibrary.map(item => item.category)))
+  const categories = Array.from(new Set([...standardCategories, ...actualCategories]))
 
   // Filter supplements based on search term
   const filteredSupplements = supplementLibrary.filter(supplement =>
@@ -32,12 +35,51 @@ export default function ManageLibrary() {
     supplement.category.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  // Load library data on component mount
+  // Load library data on component mount and when returning to page
   useEffect(() => {
     async function loadLibrary() {
       if (user) {
         try {
-          const library = await getUserSupplementLibrary(user.id)
+          let library = await getUserSupplementLibrary(user.id)
+          
+          // Automatically fix categories for all supplements
+          let needsUpdate = false
+          const fixedLibrary = library.map(item => {
+            let newItem = { ...item }
+            
+            // Fix Iron category
+            if (item.name.toLowerCase().includes('iron') && item.category !== 'Minerals') {
+              newItem.category = 'Minerals'
+              needsUpdate = true
+            }
+            
+            // Fix other common category issues
+            if (item.category === 'AI Health Plan') {
+              needsUpdate = true
+              if (item.name.toLowerCase().includes('vitamin') || item.name.toLowerCase().includes('b-complex') || item.name.toLowerCase().includes('multivitamin')) {
+                newItem.category = 'Vitamins'
+              } else if (item.name.toLowerCase().includes('magnesium') || item.name.toLowerCase().includes('calcium') || item.name.toLowerCase().includes('zinc') || item.name.toLowerCase().includes('iron')) {
+                newItem.category = 'Minerals'
+              } else if (item.name.toLowerCase().includes('omega') || item.name.toLowerCase().includes('fish oil')) {
+                newItem.category = 'Essential Fatty Acids'
+              } else if (item.name.toLowerCase().includes('probiotic') || item.name.toLowerCase().includes('digestive')) {
+                newItem.category = 'Digestive Health'
+              } else if (item.name.toLowerCase().includes('ashwagandha') || item.name.toLowerCase().includes('turmeric') || item.name.toLowerCase().includes('herbal')) {
+                newItem.category = 'Herbal'
+              } else {
+                newItem.category = 'Other'
+              }
+            }
+            
+            return newItem
+          })
+          
+          // Save updated categories if needed
+          if (needsUpdate) {
+            await saveUserSupplementLibrary(user.id, fixedLibrary)
+            library = fixedLibrary
+          }
+          
           setSupplementLibrary(library)
         } catch (error) {
           console.error('Error loading supplement library:', error)
@@ -47,6 +89,27 @@ export default function ManageLibrary() {
 
     if (isAuthenticated && user) {
       loadLibrary()
+    }
+
+    // Refresh library when page becomes visible (user returns from another page)
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isAuthenticated && user) {
+        loadLibrary()
+      }
+    }
+
+    const handleFocus = () => {
+      if (isAuthenticated && user) {
+        loadLibrary()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
     }
   }, [isAuthenticated, user])
 
@@ -304,7 +367,11 @@ export default function ManageLibrary() {
                   />
                   <span className="absolute left-3 top-3.5 text-gray-400">🔍</span>
                 </div>
+                
+
               </div>
+
+
 
               {/* Supplements List */}
               {filteredSupplements.length === 0 ? (

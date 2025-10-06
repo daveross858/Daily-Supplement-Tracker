@@ -283,19 +283,19 @@ function getDefaultLibrary(): SupplementLibraryItem[] {
   return [
     { id: '1', name: 'Vitamin D3', defaultDosage: '2000 IU', category: 'Vitamins' },
     { id: '2', name: 'Vitamin B12', defaultDosage: '1000 mcg', category: 'Vitamins' },
-    { id: '3', name: 'Omega-3 Fish Oil', defaultDosage: '1000 mg', category: 'Fatty Acids' },
+    { id: '3', name: 'Omega-3 Fish Oil', defaultDosage: '1000 mg', category: 'Essential Fatty Acids' },
     { id: '4', name: 'Magnesium', defaultDosage: '400 mg', category: 'Minerals' },
     { id: '5', name: 'Vitamin C', defaultDosage: '1000 mg', category: 'Vitamins' },
     { id: '6', name: 'Zinc', defaultDosage: '15 mg', category: 'Minerals' },
-    { id: '7', name: 'Probiotics', defaultDosage: '10 billion CFU', category: 'Digestive' },
+    { id: '7', name: 'Probiotics', defaultDosage: '10 billion CFU', category: 'Digestive Health' },
     { id: '8', name: 'Multivitamin', defaultDosage: '1 tablet', category: 'Vitamins' },
     { id: '9', name: 'Calcium', defaultDosage: '500 mg', category: 'Minerals' },
     { id: '10', name: 'Iron', defaultDosage: '18 mg', category: 'Minerals' },
     { id: '11', name: 'Vitamin E', defaultDosage: '400 IU', category: 'Vitamins' },
     { id: '12', name: 'Biotin', defaultDosage: '5000 mcg', category: 'Vitamins' },
-    { id: '13', name: 'Ashwagandha', defaultDosage: '300 mg', category: 'Herbs' },
-    { id: '14', name: 'Turmeric', defaultDosage: '500 mg', category: 'Herbs' },
-    { id: '15', name: 'CoQ10', defaultDosage: '100 mg', category: 'Antioxidants' }
+    { id: '13', name: 'Ashwagandha', defaultDosage: '300 mg', category: 'Herbal' },
+    { id: '14', name: 'Turmeric', defaultDosage: '500 mg', category: 'Herbal' },
+    { id: '15', name: 'CoQ10', defaultDosage: '100 mg', category: 'Other' }
   ]
 }
 
@@ -590,5 +590,107 @@ export async function applyDailyTemplate(userId: string, targetDate?: string): P
   } catch (error) {
     console.error('Error applying daily template:', error)
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+  }
+}
+
+// Survey Results Storage
+export interface SurveyResult {
+  id: string
+  userId: string
+  surveyData: any
+  analysisResult: any
+  createdAt: Date
+  lastViewedAt: Date
+}
+
+// Save survey results
+export async function saveSurveyResult(userId: string, surveyData: any, analysisResult: any): Promise<string> {
+  const surveyResult: SurveyResult = {
+    id: Date.now().toString(),
+    userId,
+    surveyData,
+    analysisResult,
+    createdAt: new Date(),
+    lastViewedAt: new Date()
+  }
+
+  if (USE_FIREBASE && typeof window !== 'undefined') {
+    try {
+      // In a real implementation, this would save to Firebase
+      // For now, we'll save to localStorage with Firebase-like structure
+      const existingResults = getSurveyResultsLocal(userId)
+      const updatedResults = [surveyResult, ...existingResults.slice(0, 4)] // Keep last 5 results
+      saveSurveyResultsLocal(userId, updatedResults)
+      return surveyResult.id
+    } catch (error) {
+      console.error('Error saving survey result to Firebase:', error)
+    }
+  }
+  
+  // Fallback to localStorage
+  const existingResults = getSurveyResultsLocal(userId)
+  const updatedResults = [surveyResult, ...existingResults.slice(0, 4)] // Keep last 5 results
+  saveSurveyResultsLocal(userId, updatedResults)
+  return surveyResult.id
+}
+
+// Get all survey results for user
+export async function getUserSurveyResults(userId: string): Promise<SurveyResult[]> {
+  if (USE_FIREBASE && typeof window !== 'undefined') {
+    try {
+      // In a real implementation, this would fetch from Firebase
+      // For now, we'll get from localStorage
+      return getSurveyResultsLocal(userId)
+    } catch (error) {
+      console.error('Error fetching survey results from Firebase:', error)
+    }
+  }
+  
+  // Fallback to localStorage
+  return getSurveyResultsLocal(userId)
+}
+
+// Get specific survey result
+export async function getSurveyResult(userId: string, resultId: string): Promise<SurveyResult | null> {
+  const results = await getUserSurveyResults(userId)
+  const result = results.find(r => r.id === resultId)
+  
+  if (result) {
+    // Update last viewed time
+    result.lastViewedAt = new Date()
+    await saveSurveyResultsLocal(userId, results)
+  }
+  
+  return result || null
+}
+
+// Get latest survey result
+export async function getLatestSurveyResult(userId: string): Promise<SurveyResult | null> {
+  const results = await getUserSurveyResults(userId)
+  return results.length > 0 ? results[0] : null
+}
+
+// Local storage functions for survey results
+function saveSurveyResultsLocal(userId: string, results: SurveyResult[]) {
+  const key = `surveyResults_${userId}`
+  localStorage.setItem(key, JSON.stringify(results))
+}
+
+function getSurveyResultsLocal(userId: string): SurveyResult[] {
+  const key = `surveyResults_${userId}`
+  const data = localStorage.getItem(key)
+  if (!data) return []
+  
+  try {
+    const results = JSON.parse(data)
+    // Convert date strings back to Date objects
+    return results.map((result: any) => ({
+      ...result,
+      createdAt: new Date(result.createdAt),
+      lastViewedAt: new Date(result.lastViewedAt)
+    }))
+  } catch (error) {
+    console.error('Error parsing survey results:', error)
+    return []
   }
 }

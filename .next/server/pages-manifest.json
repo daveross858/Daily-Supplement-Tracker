@@ -3,6 +3,5 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/library": "pages/library.js",
-  "/": "pages/index.js",
-  "/weekly": "pages/weekly.js"
+  "/health-survey": "pages/health-survey.js"
 }
